@@ -14,7 +14,11 @@ export default function EnhancedExcuseGenerator() {
   const [isCopied, setIsCopied] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [audioData, setAudioData] = useState({text:'', data:''})
-  const audioRef = useRef(new Audio())
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  useEffect(() => {
+    // Initialize Audio only on the client side
+    audioRef.current = new Audio();
+  }, []);
 
   useEffect(() => {
     const savedMode = localStorage.getItem('darkMode')
