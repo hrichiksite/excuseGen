@@ -1,3 +1,7 @@
+# Excuse Generator
+
+Generate excuses in a jiffy! This is a simple web app that generates excuses for you. It is built with Next.js and TypeScript.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
