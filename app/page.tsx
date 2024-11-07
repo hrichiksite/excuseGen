@@ -127,9 +127,9 @@ export default function EnhancedExcuseGenerator() {
 
   useEffect(() => {
     const audio = audioRef.current
-    audio.onended = () => setIsPlaying(false)
+    audio!.onended = () => setIsPlaying(false)
     return () => {
-      audio.onended = null
+      audio!.onended = null
     }
   }, [])
 
