@@ -88,8 +88,8 @@ export default function EnhancedExcuseGenerator() {
       if(audioData.text === excuse) {
         setIsPlaying(true)
         try{
-        audioRef.current.src = `data:audio/mp3;base64,${audioData.data}`
-        await audioRef.current.play()
+        audioRef.current!.src = `data:audio/mp3;base64,${audioData.data}`
+        await audioRef.current!.play()
         return
         } catch (error) {
           console.error('Error playing TTS:', error)
@@ -112,8 +112,8 @@ export default function EnhancedExcuseGenerator() {
 
       const data = await response.json()
       if (data.status) {
-        audioRef.current.src = `data:audio/mp3;base64,${data.v_data}`
-        await audioRef.current.play()
+        audioRef.current!.src = `data:audio/mp3;base64,${data.v_data}`
+        await audioRef.current!.play()
         setAudioData({text:excuse, data:data.v_data})
       } else {
         throw new Error('Failed to get TTS data')
