@@ -60,7 +60,7 @@ export default function EnhancedExcuseGenerator() {
         accumulatedExcuse += chunk
         setExcuse(accumulatedExcuse)
       }
-
+      //@ts-ignore
       setExcuseHistory(prev => [accumulatedExcuse, ...prev.slice(0, 4)])
     } catch (error) {
       console.error('Error generating excuse:', error)
