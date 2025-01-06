@@ -3,18 +3,30 @@
 import { useState, useEffect, useRef } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Moon, Sun, Clipboard, Check, Mic } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Slider } from "@/components/ui/slider"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Moon, Sun, Clipboard, Check, Mic, Shuffle, Info } from 'lucide-react'
+
+const HUMOR_MODES = ['Serious', 'Witty', 'Ridiculous']
+const HUMOR_STYLES = ['American', 'British', 'Indian']
 
 export default function EnhancedExcuseGenerator() {
   const [context, setContext] = useState('')
   const [excuse, setExcuse] = useState('')
-  const [excuseHistory, setExcuseHistory] = useState([])
+  const [excuseHistory, setExcuseHistory] = useState<string[]>([])
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [audioData, setAudioData] = useState({text:'', data:''})
+  const [isAdvancedMode, setIsAdvancedMode] = useState(false)
+  const [humorMode, setHumorMode] = useState('Serious')
+  const [excuseFor, setExcuseFor] = useState('')
+  const [humorStyle, setHumorStyle] = useState('American')
+  const [believabilityScale, setBelievabilityScale] = useState(50)
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [audioData, setAudioData] = useState({ text: "", data: "" })
   useEffect(() => {
     // Initialize Audio only on the client side
     audioRef.current = new Audio();
@@ -32,7 +44,7 @@ export default function EnhancedExcuseGenerator() {
     localStorage.setItem('darkMode', JSON.stringify(isDarkMode))
   }, [isDarkMode])
 
-  const generateExcuse = async () => {
+  const generateExcuse = async (isLucky = false) => {
     setIsLoading(true)
     setExcuse('')
     try {
@@ -41,7 +53,14 @@ export default function EnhancedExcuseGenerator() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ context }),
+        body: JSON.stringify({
+          context,
+          isAdvancedMode,
+          humorMode: isLucky ? HUMOR_MODES[Math.floor(Math.random() * HUMOR_MODES.length)] : humorMode,
+          excuseFor: isLucky ? '' : excuseFor,
+          humorStyle: isLucky ? HUMOR_STYLES[Math.floor(Math.random() * HUMOR_STYLES.length)] : humorStyle,
+          believabilityScale: isLucky ? Math.floor(Math.random() * 100) : believabilityScale,
+        }),
       })
 
       if (!response.ok) {
@@ -64,7 +83,7 @@ export default function EnhancedExcuseGenerator() {
         accumulatedExcuse += chunk
         setExcuse(accumulatedExcuse)
       }
-      //@ts-ignore
+
       setExcuseHistory(prev => [accumulatedExcuse, ...prev.slice(0, 4)])
     } catch (error) {
       console.error('Error generating excuse:', error)
@@ -85,36 +104,39 @@ export default function EnhancedExcuseGenerator() {
 
   const playTTS = async () => {
     try {
-      if(audioData.text === excuse) {
-        setIsPlaying(true)
-        try{
-        audioRef.current!.src = `data:audio/mp3;base64,${audioData.data}`
-        await audioRef.current!.play()
-        return
-        } catch (error) {
-          console.error('Error playing TTS:', error)
-        } finally {
-          setIsPlaying(false)
-        }
-      }
       setIsPlaying(true)
-      const response = await fetch('https://countik.com/api/text/speech', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ text: excuse, voice: "en_us_001" }),
-      })
+      if (audioRef.current) {
+        if (audioData.text === excuse) {
+          setIsPlaying(true)
+          try {
+            audioRef.current!.src = `data:audio/mp3;base64,${audioData.data}`
+            await audioRef.current!.play()
+            return
+          } catch (error) {
+            console.error('Error playing TTS:', error)
+          } finally {
+            setIsPlaying(false)
+          }
+        }
+        const response = await fetch('https://tiktok-tts.weilnet.workers.dev/api/generation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ text: excuse, voice: 'en_us_001' }),
+        })
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
 
-      const data = await response.json()
-      if (data.status) {
-        audioRef.current!.src = `data:audio/mp3;base64,${data.v_data}`
-        await audioRef.current!.play()
-        setAudioData({text:excuse, data:data.v_data})
+        const data = await response.json()
+        if (data.success) {
+          audioRef.current.src = `data:audio/mp3;base64,${data.data}`
+          console.log({ text: excuse, data: data.data })
+          setAudioData({ text: excuse, data: data.data })
+          await audioRef.current!.play()
+        }
       } else {
         throw new Error('Failed to get TTS data')
       }
@@ -126,12 +148,26 @@ export default function EnhancedExcuseGenerator() {
   }
 
   useEffect(() => {
+    if (!audioRef.current) return
     const audio = audioRef.current
-    audio!.onended = () => setIsPlaying(false)
+    audio.onended = () => setIsPlaying(false)
     return () => {
-      audio!.onended = null
+      audio.onended = null
     }
   }, [])
+
+  const InfoTooltip = ({ content }: { content: string }) => (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger>
+          <Info className="h-4 w-4 ml-2" />
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{content}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  )
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} transition-colors duration-300`}>
@@ -145,7 +181,19 @@ export default function EnhancedExcuseGenerator() {
             {isDarkMode ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
           </Button>
         </div>
-        
+
+        <div className="flex items-center space-x-2 mb-4">
+          <Switch
+            checked={isAdvancedMode}
+            onCheckedChange={setIsAdvancedMode}
+            id="advanced-mode"
+          />
+          <label htmlFor="advanced-mode" className="text-lg font-medium">
+            Advanced Mode
+          </label>
+          <InfoTooltip content="Enable additional options for customizing your excuse" />
+        </div>
+
         <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 mb-8">
           <Input
             type="text"
@@ -155,15 +203,96 @@ export default function EnhancedExcuseGenerator() {
             className={`flex-grow border-4 ${isDarkMode ? 'border-white' : 'border-black'} text-2xl p-4 focus:outline-none bg-transparent`}
           />
           <Button
-            onClick={generateExcuse}
+            onClick={() => generateExcuse()}
             disabled={isLoading}
-            className={`text-2xl px-8 py-4 border-4 ${
-              isDarkMode 
-                ? 'border-white bg-white text-black hover:bg-black hover:text-white' 
-                : 'border-black bg-black text-white hover:bg-white hover:text-black'
-            } transition-colors`}
+            className={`text-2xl px-8 py-4 border-4 ${isDarkMode
+              ? 'border-white bg-white text-black hover:bg-black hover:text-white'
+              : 'border-black bg-black text-white hover:bg-white hover:text-black'
+              } transition-colors`}
           >
             {isLoading ? 'GENERATING...' : 'GENERATE'}
+          </Button>
+        </div>
+
+        {isAdvancedMode && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div>
+              <label htmlFor="humor-mode" className="block text-lg font-medium mb-2">
+                Humor Mode
+                <InfoTooltip content="Choose the level of humor for your excuse" />
+              </label>
+              <Select value={humorMode} onValueChange={setHumorMode}>
+                <SelectTrigger id="humor-mode">
+                  <SelectValue placeholder="Select humor mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  {HUMOR_MODES.map((mode) => (
+                    <SelectItem key={mode} value={mode}>
+                      {mode}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label htmlFor="excuse-for" className="block text-lg font-medium mb-2">
+                Excuse For
+                <InfoTooltip content="Specify who the excuse is intended for" />
+              </label>
+              <Input
+                id="excuse-for"
+                type="text"
+                value={excuseFor}
+                onChange={(e) => setExcuseFor(e.target.value)}
+                placeholder="Who needs the excuse?"
+                className={`w-full border-4 ${isDarkMode ? 'border-white' : 'border-black'} p-2 focus:outline-none bg-transparent`}
+              />
+            </div>
+            <div>
+              <label htmlFor="humor-style" className="block text-lg font-medium mb-2">
+                Humor Style
+                <InfoTooltip content="Select the cultural style of humor for your excuse" />
+              </label>
+              <Select value={humorStyle} onValueChange={setHumorStyle}>
+                <SelectTrigger id="humor-style">
+                  <SelectValue placeholder="Select humor style" />
+                </SelectTrigger>
+                <SelectContent>
+                  {HUMOR_STYLES.map((style) => (
+                    <SelectItem key={style} value={style}>
+                      {style}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label htmlFor="believability" className="block text-lg font-medium mb-2">
+                Believability Scale: {believabilityScale}
+                <InfoTooltip content="Adjust how believable your excuse should be" />
+              </label>
+              <Slider
+                id="believability"
+                min={0}
+                max={100}
+                step={1}
+                value={[believabilityScale]}
+                onValueChange={(value) => setBelievabilityScale(value[0])}
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-center mb-8">
+          <Button
+            onClick={() => generateExcuse(true)}
+            className={`text-xl px-6 py-3 border-4 ${isDarkMode
+              ? 'border-white bg-white text-black hover:bg-black hover:text-white'
+              : 'border-black bg-black text-white hover:bg-white hover:text-black'
+              } transition-colors`}
+          >
+            <Shuffle className="mr-2 h-5 w-5" />
+            I'm Feeling Lucky
           </Button>
         </div>
 
