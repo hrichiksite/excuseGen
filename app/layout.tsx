@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import RaspberryPiRibbon from '@/components/HostedOnARPI';
+//import RaspberryPiRibbon from '@/components/HostedOnARPI';
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
@@ -16,7 +16,6 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "Excuse Me, What?",
   description: "A wild excuse generator appears!",
-  
 };
 
 export default function RootLayout({

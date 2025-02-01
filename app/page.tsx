@@ -7,8 +7,7 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Moon, Sun, Clipboard, Check, Mic, Shuffle, Info } from 'lucide-react'
-
+import { Moon, Sun, Clipboard, Check, Mic, Shuffle, Info, RotateCcw, Layers } from 'lucide-react'
 const HUMOR_MODES = ['Serious', 'Witty', 'Ridiculous']
 const HUMOR_STYLES = ['American', 'British', 'Indian']
 
@@ -155,6 +154,16 @@ export default function EnhancedExcuseGenerator() {
       audio.onended = null
     }
   }, [])
+
+  const setMetaExcuse = (excuse: string) => {
+    setContext(`Excuse my previous excuse: ${excuse}`)
+    generateExcuse()
+  }
+
+  const setReverseExcuse = (excuse: string) => {
+    setContext(`Cancel my excuse: ${excuse}`)
+    generateExcuse()
+  }
 
   const InfoTooltip = ({ content }: { content: string }) => (
     <TooltipProvider>
@@ -322,7 +331,31 @@ export default function EnhancedExcuseGenerator() {
             <h2 className="text-3xl font-bold mb-4">EXCUSE HISTORY</h2>
             <ul className="space-y-2">
               {excuseHistory.map((historyExcuse, index) => (
-                <li key={index} className="text-xl">{historyExcuse}</li>
+                <li key={index} className="text-xl">
+                  <p>{historyExcuse}</p>
+                  <div className="flex space-x-2 mt-2">
+                    <Button
+                      onClick={() => setMetaExcuse(historyExcuse)}
+                      className={`text-sm px-2 py-1 border-2 ${isDarkMode
+                        ? 'border-white bg-white text-black hover:bg-black hover:text-white'
+                        : 'border-black bg-black text-white hover:bg-white hover:text-black'
+                        } transition-colors`}
+                    >
+                      <Layers className="h-4 w-4 mr-1" />
+                      Excuse My Excuse
+                    </Button>
+                    <Button
+                      onClick={() => setReverseExcuse(historyExcuse)}
+                      className={`text-sm px-2 py-1 border-2 ${isDarkMode
+                        ? 'border-white bg-white text-black hover:bg-black hover:text-white'
+                        : 'border-black bg-black text-white hover:bg-white hover:text-black'
+                        } transition-colors`}
+                    >
+                      <RotateCcw className="h-4 w-4 mr-1" />
+                      Reverse Excuse
+                    </Button>
+                  </div>
+                </li>
               ))}
             </ul>
           </div>

@@ -2,6 +2,22 @@
 
 Generate excuses in a jiffy! This is a simple web app that generates excuses for you. It is built with Next.js and TypeScript.
 
+## Features
+- Generate excuses (duh!)
+- Copy the excuse to clipboard
+- Excuse to Speech (text-to-speech)
+- Dark mode
+- Responsive design
+- Advanced Excuse Generation
+
+## Local Development
+1. Clone the repository
+2. Install dependencies
+3. Fill in the `.env.local` file with the things in example.env
+4. Run the development server with `npm run dev`
+
+-------------------
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
